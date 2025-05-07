@@ -1,32 +1,31 @@
-I understand that the formatting of the previous code might have been difficult to follow, and you’d like it split into even more files for better organization. Below, I’ll refactor the code into a more modular structure by breaking it down further into additional files. This will improve readability, maintainability, and scalability while keeping the application functional for browser-based API testing (e.g., via Postman or cURL).
+Below is the full code for a Spring Boot authentication application without using Lombok. This application includes user registration and login functionality with API endpoints that can be accessed via a browser or tools like Postman. All necessary getters, setters, and methods are implemented manually.
 
-Updated Project Structure
-Here’s the refactored project structure with additional files for better separation of concerns:
+Project Structure
 src/main/java/com/example/auth/
-├── AuthApplication.java          // Main application class
+├── AuthApplication.java
 ├── model/
-│   └── User.java                 // User entity
+│   └── User.java
 ├── dto/
-│   ├── UserRegistrationDto.java  // DTO for user registration
-│   └── UserLoginDto.java         // DTO for user login
+│   ├── UserRegistrationDto.java
+│   └── UserLoginDto.java
 ├── repository/
-│   └── UserRepository.java       // User repository interface
+│   └── UserRepository.java
 ├── service/
-│   ├── UserService.java          // User service interface
-│   └── UserServiceImpl.java      // User service implementation
+│   ├── UserService.java
+│   └── UserServiceImpl.java
 ├── controller/
-│   └── UserController.java       // User controller for API endpoints
+│   └── UserController.java
 ├── config/
-│   ├── SecurityConfig.java       // Spring Security configuration
-│   └── JpaConfig.java            // JPA configuration
+│   ├── SecurityConfig.java
+│   └── JpaConfig.java
 ├── exception/
-│   └── UserAlreadyExistsException.java  // Custom exception for duplicate usernames
+│   └── UserAlreadyExistsException.java
 └── security/
-    └── CustomUserDetails.java    // Custom UserDetails implementation
+    └── CustomUserDetails.java
 
 Code Files
 1. `AuthApplication.java`
-The main entry point of the Spring Boot application.
+The main application class to bootstrap the Spring Boot application.
 package com.example.auth;
 
 import org.springframework.boot.SpringApplication;
@@ -41,15 +40,14 @@ public class AuthApplication {
 }
 
 2. `User.java` (Entity)
-The User entity for database storage.
+The user entity representing the database table, with all methods implemented manually.
 package com.example.auth.model;
 
 import jakarta.persistence.*;
-import lombok.Data;
+import java.util.Objects;
 
 @Entity
 @Table(name = "users")
-@Data
 public class User {
 
     @Id
@@ -64,35 +62,147 @@ public class User {
 
     @Column(nullable = false)
     private String role;
+
+    // Default constructor (required by JPA)
+    public User() {}
+
+    // Parameterized constructor
+    public User(Long id, String username, String password, String role) {
+        this.id = id;
+        this.username = username;
+        this.password = password;
+        this.role = role;
+    }
+
+    // Getters
+    public Long getId() {
+        return id;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public String getRole() {
+        return role;
+    }
+
+    // Setters
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
+    }
+
+    // toString method
+    @Override
+    public String toString() {
+        return "User{" +
+                "id=" + id +
+                ", username='" + username + '\'' +
+                ", password='" + password + '\'' +
+                ", role='" + role + '\'' +
+                '}';
+    }
+
+    // equals method
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        User user = (User) o;
+        return Objects.equals(id, user.id) &&
+                Objects.equals(username, user.username) &&
+                Objects.equals(password, user.password) &&
+                Objects.equals(role, user.role);
+    }
+
+    // hashCode method
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, username, password, role);
+    }
 }
 
 3. `UserRegistrationDto.java` (DTO)
 Data Transfer Object for user registration.
 package com.example.auth.dto;
 
-import lombok.Data;
-
-@Data
 public class UserRegistrationDto {
     private String username;
     private String password;
     private String role;
+
+    // Getters
+    public String getUsername() {
+        return username;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public String getRole() {
+        return role;
+    }
+
+    // Setters
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
+    }
 }
 
 4. `UserLoginDto.java` (DTO)
 Data Transfer Object for user login.
 package com.example.auth.dto;
 
-import lombok.Data;
-
-@Data
 public class UserLoginDto {
     private String username;
     private String password;
+
+    // Getters
+    public String getUsername() {
+        return username;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    // Setters
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
 }
 
 5. `UserRepository.java`
-Database operations for the User entity.
+JPA repository interface for database operations on the User entity.
 package com.example.auth.repository;
 
 import com.example.auth.model.User;
@@ -107,7 +217,7 @@ public interface UserRepository extends JpaRepository {
 }
 
 6. `UserService.java` (Interface)
-Service interface for user operations.
+Service interface defining user-related operations.
 package com.example.auth.service;
 
 import com.example.auth.model.User;
@@ -120,7 +230,7 @@ public interface UserService {
 }
 
 7. `UserServiceImpl.java` (Implementation)
-Implementation of the UserService interface.
+Implementation of the UserService interface, handling user registration and lookup.
 package com.example.auth.service;
 
 import com.example.auth.exception.UserAlreadyExistsException;
@@ -158,7 +268,7 @@ public class UserServiceImpl implements UserService {
 }
 
 8. `UserController.java`
-Handles HTTP requests for registration and login.
+REST controller handling registration and login endpoints.
 package com.example.auth.controller;
 
 import com.example.auth.dto.UserLoginDto;
@@ -209,7 +319,7 @@ public class UserController {
 }
 
 9. `SecurityConfig.java`
-Spring Security configuration.
+Spring Security configuration to secure the application and define authentication rules.
 package com.example.auth.config;
 
 import com.example.auth.security.CustomUserDetails;
@@ -258,7 +368,7 @@ public class SecurityConfig {
 }
 
 10. `JpaConfig.java`
-JPA-specific configuration (separated from security).
+Configuration for JPA repositories.
 package com.example.auth.config;
 
 import org.springframework.context.annotation.Configuration;
@@ -270,7 +380,7 @@ public class JpaConfig {
 }
 
 11. `UserAlreadyExistsException.java`
-Custom exception for duplicate usernames.
+Custom exception thrown when a username is already taken.
 package com.example.auth.exception;
 
 public class UserAlreadyExistsException extends RuntimeException {
@@ -280,13 +390,15 @@ public class UserAlreadyExistsException extends RuntimeException {
 }
 
 12. `CustomUserDetails.java`
-Custom implementation of UserDetails for Spring Security.
+Custom implementation of Spring Security’s UserDetails interface.
 package com.example.auth.security;
 
 import com.example.auth.model.User;
-import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authorities.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 
+import java.util.Collection;
 import java.util.Collections;
 
 public class CustomUserDetails implements UserDetails {
@@ -334,7 +446,7 @@ public class CustomUserDetails implements UserDetails {
 }
 
 Dependencies (`pom.xml`)
-Ensure these dependencies are in your pom.xml:
+The Maven dependencies required for the project.
     
         org.springframework.boot
         spring-boot-starter-web
@@ -352,15 +464,10 @@ Ensure these dependencies are in your pom.xml:
         h2
         runtime
     
-    
-        org.projectlombok
-        lombok
-        true
-    
 
 
 Application Properties (`application.properties`)
-Configure the H2 database and JPA:
+Configuration properties for the H2 in-memory database and JPA.
 spring.datasource.url=jdbc:h2:mem:testdb
 spring.datasource.driverClassName=org.h2.Driver
 spring.datasource.username=sa
@@ -371,33 +478,24 @@ spring.jpa.hibernate.ddl-auto=update
 spring.jpa.show-sql=true
 
 How to Run
-	1	Organize Files: Place each file in its respective package.
-	2	Build and Run: mvn clean install
+	1	Organize the files according to the project structure provided.
+	2	Build and run the application using Maven: mvn clean install
 	3	mvn spring-boot:run
 	4	
-	5	Access: The app runs on http://localhost:8080.
+	5	The application will be accessible at http://localhost:8080.
 
 Testing the API
-Register a User
-	•	Endpoint: POST http://localhost:8080/api/register
-	•	Body: {
+You can test the API endpoints using a tool like Postman or curl.
+	•	Register a User: Endpoint: POST /api/register Request Body (JSON): {
 	•	  "username": "john_doe",
 	•	  "password": "password123",
 	•	  "role": "USER"
 	•	}
-	•	
-	•	Response: 200 OK with "User registered successfully" or 400 Bad Request with an error message.
-Login a User
-	•	Endpoint: POST http://localhost:8080/api/login
-	•	Body: {
+	•	 Expected Response: "User registered successfully" (HTTP 200) or an error if the username exists.
+	•	Login: Endpoint: POST /api/login Request Body (JSON): {
 	•	  "username": "john_doe",
 	•	  "password": "password123"
 	•	}
-	•	
-	•	Response: 200 OK with "Login successful" or 401 Unauthorized with "Invalid credentials".
+	•	 Expected Response: "Login successful" (HTTP 200) or "Invalid credentials" (HTTP 401).
 
-Improvements
-	•	More Files: Added DTOs, custom exceptions, and separated security/JPA configs.
-	•	Better Formatting: Each component is clearly separated and documented.
-	•	Maintainability: Smaller, focused files make the code easier to manage.
-Let me know if you need further adjustments!
+This code provides a complete Spring Boot authentication application with manual implementations, avoiding the use of Lombok. Let me know if you need further assistance!
