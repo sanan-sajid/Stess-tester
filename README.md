@@ -1,127 +1,48 @@
-Great — with three eligibility criteria (CGPA, age, income), we can update the logic to filter students accordingly.
+import React, { useState, useRef, useEffect } from 'react';
 
-⸻
+const NotificationDropdown = ({ notifications }) => {
+  const [open, setOpen] = useState(false);
+  const dropdownRef = useRef();
 
-Updated Goal:
+  const toggleDropdown = () => setOpen(!open);
 
-When a new Scholarship is created (with min CGPA, max age, max income), find all students who meet all three criteria, and insert entries into scholarship_status.
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
-⸻
+  return (
+    <div className="relative inline-block" ref={dropdownRef}>
+      <button
+        onClick={toggleDropdown}
+        className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded hover:bg-gray-200 transition"
+      >
+        Notifications ({notifications.length})
+      </button>
 
-1. Update Entity Classes
+      {open && (
+        <div className="absolute right-0 mt-2 w-64 bg-white border border-gray-200 rounded shadow-lg z-50 max-h-64 overflow-y-auto">
+          {notifications.length === 0 ? (
+            <div className="px-4 py-3 text-sm text-gray-500">No notifications</div>
+          ) : (
+            notifications.map((note, index) => (
+              <div
+                key={index}
+                className="px-4 py-3 text-sm text-gray-800 border-b last:border-b-0 hover:bg-gray-50 transition"
+              >
+                {note}
+              </div>
+            ))
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
 
-Student.java
-
-@Entity
-public class Student {
-    @Id
-    @GeneratedValue
-    private Long id;
-
-    private String name;
-    private String email;
-    private double gpa;
-    private int age;
-    private double income;
-
-    // getters and setters
-}
-
-Scholarship.java
-
-@Entity
-public class Scholarship {
-    @Id
-    @GeneratedValue
-    private Long id;
-
-    private String name;
-    private double minGpa;
-    private int maxAge;
-    private double maxIncome;
-
-    // getters and setters
-}
-
-
-
-⸻
-
-2. Update Repository
-
-StudentRepository.java
-
-public interface StudentRepository extends JpaRepository<Student, Long> {
-
-    List<Student> findByGpaGreaterThanEqualAndAgeLessThanEqualAndIncomeLessThanEqual(
-        double gpa, int age, double income
-    );
-}
-
-
-
-⸻
-
-3. Updated Service Logic
-
-ScholarshipService.java
-
-@Service
-public class ScholarshipService {
-
-    @Autowired
-    private StudentRepository studentRepo;
-
-    @Autowired
-    private ScholarshipRepository scholarshipRepo;
-
-    @Autowired
-    private ScholarshipStatusRepository statusRepo;
-
-    public Scholarship addScholarship(Scholarship scholarship) {
-        Scholarship savedScholarship = scholarshipRepo.save(scholarship);
-
-        List<Student> eligibleStudents = studentRepo
-            .findByGpaGreaterThanEqualAndAgeLessThanEqualAndIncomeLessThanEqual(
-                scholarship.getMinGpa(),
-                scholarship.getMaxAge(),
-                scholarship.getMaxIncome()
-            );
-
-        List<ScholarshipStatus> statuses = eligibleStudents.stream().map(student -> {
-            ScholarshipStatus status = new ScholarshipStatus();
-            status.setStudentEmail(student.getEmail());
-            status.setScholarshipId(savedScholarship.getId());
-            return status;
-        }).collect(Collectors.toList());
-
-        statusRepo.saveAll(statuses);
-
-        return savedScholarship;
-    }
-}
-
-
-
-⸻
-
-4. Sample Scholarship POST Request
-
-Send a POST request like:
-
-{
-  "name": "Merit + Financial Need",
-  "minGpa": 3.5,
-  "maxAge": 25,
-  "maxIncome": 50000
-}
-
-
-
-⸻
-
-This will:
-	•	Filter students by CGPA ≥ minGpa, age ≤ maxAge, and income ≤ maxIncome.
-	•	Insert entries into scholarship_status for each eligible student.
-
-Would you like to auto-email students when they’re added to a scholarship status, or just store the info?
+export default NotificationDropdown;
